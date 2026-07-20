@@ -1,0 +1,22 @@
+name: Lint
+
+# Validates the add-on against the community add-on linter (the de-facto
+# standard checker used by Home Assistant add-on authors).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  addon-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Home Assistant add-on linter
+        uses: frenck/action-addon-linter@v2
+        with:
+          path: "./lightnvr"

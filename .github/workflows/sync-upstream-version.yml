@@ -1,0 +1,100 @@
+name: Sync upstream LightNVR version
+
+# Keeps this add-on pinned to the latest published LightNVR release. Runs daily
+# and can be triggered manually. When a newer semver tag exists upstream *and*
+# its multi-arch image is published on GHCR, it bumps build.yaml + config.yaml,
+# prepends a CHANGELOG entry, and commits to main.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Force a specific version (e.g. 0.37.0); blank = auto-detect latest"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-version
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine target version
+        id: ver
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${FORCE}" ]; then
+            latest="${FORCE}"
+          else
+            # Highest X.Y.Z tag on the upstream repo (ignores v-prefixed/older tags)
+            latest=$(gh api --paginate repos/opensensor/lightnvr/tags --jq '.[].name' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V | tail -1)
+          fi
+          if [ -z "${latest}" ]; then
+            echo "::error::Could not determine an upstream version"; exit 1
+          fi
+          current=$(grep -E '^version:' lightnvr/config.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          {
+            echo "latest=${latest}"
+            echo "current=${current}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Upstream latest: ${latest} | currently pinned: ${current}"
+
+      - name: Verify image tag is published on GHCR
+        if: steps.ver.outputs.latest != steps.ver.outputs.current
+        run: |
+          set -euo pipefail
+          ver="${{ steps.ver.outputs.latest }}"
+          token=$(curl -sf "https://ghcr.io/token?scope=repository:opensensor/lightnvr:pull" | jq -r .token)
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer ${token}" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" \
+            "https://ghcr.io/v2/opensensor/lightnvr/manifests/${ver}")
+          echo "GHCR manifest for ${ver}: HTTP ${code}"
+          if [ "${code}" != "200" ]; then
+            echo "::notice::Image ghcr.io/opensensor/lightnvr:${ver} not published yet — skipping bump"
+            exit 1
+          fi
+
+      - name: Bump add-on files
+        if: steps.ver.outputs.latest != steps.ver.outputs.current
+        run: |
+          set -euo pipefail
+          new="${{ steps.ver.outputs.latest }}"
+          sed -i -E "s#(ghcr\.io/opensensor/lightnvr):[0-9]+\.[0-9]+\.[0-9]+#\1:${new}#g" lightnvr/build.yaml
+          sed -i -E "s/^(version:).*/\1 \"${new}\"/" lightnvr/config.yaml
+          tmp=$(mktemp)
+          {
+            echo "# Changelog"
+            echo
+            echo "## ${new}"
+            echo
+            echo "- Update to upstream LightNVR ${new}."
+            tail -n +2 lightnvr/CHANGELOG.md
+          } > "${tmp}"
+          mv "${tmp}" lightnvr/CHANGELOG.md
+
+      - name: Commit & push
+        if: steps.ver.outputs.latest != steps.ver.outputs.current
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lightnvr/build.yaml lightnvr/config.yaml lightnvr/CHANGELOG.md
+          git commit -m "chore: bump LightNVR add-on to ${{ steps.ver.outputs.latest }}"
+          git push
