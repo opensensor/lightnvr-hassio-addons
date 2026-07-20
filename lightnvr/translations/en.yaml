@@ -1,0 +1,35 @@
+---
+configuration:
+  web_port:
+    name: Web UI port
+    description: >-
+      Host port for the LightNVR Web UI (default 7800, deliberately non-standard
+      to avoid clashing with other services). If you change this, open
+      http://<host-ip>:<port>/ manually — the "Open Web UI" button uses the
+      default. Requires an add-on restart.
+  max_streams:
+    name: Maximum streams
+    description: >-
+      Number of camera stream slots LightNVR will allocate (default 32,
+      ceiling 256). Requires an add-on restart to take effect.
+  go2rtc_config_persist:
+    name: Persist go2rtc configuration
+    description: >-
+      Keep the go2rtc configuration between restarts. Turn off only if you want
+      go2rtc to regenerate its config on every start.
+  onvif_network:
+    name: ONVIF discovery network
+    description: >-
+      Optional CIDR (e.g. 192.168.1.0/24) to scan for ONVIF cameras. Leave
+      blank to auto-detect. Only needed if automatic discovery misses cameras.
+  timezone:
+    name: Timezone override
+    description: >-
+      Optional. Leave blank to inherit the Home Assistant timezone. Set an
+      IANA name (e.g. America/New_York) to override it.
+network:
+  8080/tcp: Web UI
+  8554/tcp: RTSP restream (go2rtc)
+  8555/tcp: WebRTC (TCP)
+  8555/udp: WebRTC (UDP)
+  1984/tcp: go2rtc API

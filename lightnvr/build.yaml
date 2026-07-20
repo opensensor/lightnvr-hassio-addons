@@ -1,0 +1,11 @@
+---
+# The LightNVR image is a single multi-arch manifest (amd64, arm64, arm/v7),
+# so the same tag is used for every architecture — Docker resolves the correct
+# platform when the Supervisor builds the wrapper for the target machine.
+build_from:
+  amd64: ghcr.io/opensensor/lightnvr:0.36.3
+  aarch64: ghcr.io/opensensor/lightnvr:0.36.3
+  armv7: ghcr.io/opensensor/lightnvr:0.36.3
+labels:
+  org.opencontainers.image.title: "LightNVR (Home Assistant add-on)"
+  org.opencontainers.image.source: "https://github.com/opensensor/lightnvr"

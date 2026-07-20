@@ -1,0 +1,61 @@
+---
+name: LightNVR
+version: "0.36.3"
+slug: lightnvr
+description: >-
+  Lightweight Network Video Recorder — go2rtc streaming, WebRTC/HLS live view,
+  ONVIF discovery, motion/object detection and continuous recording.
+url: "https://github.com/opensensor/lightnvr"
+# LightNVR publishes a multi-arch image (amd64, arm64, arm/v7). The add-on
+# builds a thin wrapper on top of it (see build.yaml / Dockerfile) so the
+# correct platform is selected automatically.
+arch:
+  - amd64
+  - aarch64
+  - armv7
+init: false
+startup: application
+boot: auto
+# Host networking is used so cameras can be auto-discovered on the LAN
+# (ONVIF WS-Discovery / mDNS are multicast) and so go2rtc WebRTC candidates
+# are directly reachable. The Web UI is then available on the host at :8080.
+host_network: true
+# Recordings (potentially very large) are stored under the Home Assistant
+# "media" folder so they are NOT swept into add-on backups. Config + the
+# database live under the add-on's own /data, which IS backed up.
+map:
+  - media:rw
+# The Web UI defaults to the non-standard port 7800 to avoid clashing with
+# other services on the host (8080 is very commonly taken). If you change
+# web_port in the options, open http://<host-ip>:<web_port>/ manually — this
+# button always points at the default.
+# Supervisor requires the [PORT:xxxx] placeholder (it maps container port 7800
+# to the host port). If you change web_port, browse to the host IP:port
+# directly — this button tracks the default 7800.
+webui: "http://[HOST]:[PORT:7800]/"
+# Ports below are informational only (host_network exposes them directly on
+# the host); they surface the port list in the add-on Info tab.
+ports:
+  7800/tcp: 7800
+  8554/tcp: 8554
+  8555/tcp: 8555
+  8555/udp: 8555
+  1984/tcp: 1984
+ports_description:
+  7800/tcp: Web UI (configurable via web_port)
+  8554/tcp: RTSP restream (go2rtc)
+  8555/tcp: WebRTC (TCP)
+  8555/udp: WebRTC (UDP)
+  1984/tcp: go2rtc API
+options:
+  web_port: 7800
+  max_streams: 32
+  go2rtc_config_persist: true
+  onvif_network: ""
+  timezone: ""
+schema:
+  web_port: int(1,65535)
+  max_streams: int(1,256)
+  go2rtc_config_persist: bool
+  onvif_network: "str?"
+  timezone: "str?"
