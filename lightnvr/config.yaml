@@ -9,13 +9,13 @@ url: "https://github.com/opensensor/lightnvr"
 # LightNVR publishes a multi-arch image (amd64, arm64, arm/v7). The add-on
 # builds a thin wrapper on top of it (see build.yaml / Dockerfile) so the
 # correct platform is selected automatically.
+# armv7 (32-bit ARM) was dropped by Home Assistant in 2025.12, so only the
+# 64-bit targets are listed. The upstream image still publishes arm/v7 for
+# non-HA Docker users.
 arch:
   - amd64
   - aarch64
-  - armv7
 init: false
-startup: application
-boot: auto
 # Host networking is used so cameras can be auto-discovered on the LAN
 # (ONVIF WS-Discovery / mDNS are multicast) and so go2rtc WebRTC candidates
 # are directly reachable. The Web UI is then available on the host at :8080.

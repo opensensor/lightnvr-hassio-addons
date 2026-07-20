@@ -5,7 +5,6 @@
 build_from:
   amd64: ghcr.io/opensensor/lightnvr:0.36.3
   aarch64: ghcr.io/opensensor/lightnvr:0.36.3
-  armv7: ghcr.io/opensensor/lightnvr:0.36.3
 labels:
   org.opencontainers.image.title: "LightNVR (Home Assistant add-on)"
   org.opencontainers.image.source: "https://github.com/opensensor/lightnvr"

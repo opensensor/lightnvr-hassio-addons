@@ -23,7 +23,7 @@ motion/object detection — directly from the Home Assistant add-on store.
 
 | Add-on | Description |
 | --- | --- |
-| [**LightNVR**](./lightnvr) | Lightweight NVR wrapping `ghcr.io/opensensor/lightnvr` — go2rtc, WebRTC/HLS, ONVIF, recording. amd64 / aarch64 / armv7. |
+| [**LightNVR**](./lightnvr) | Lightweight NVR wrapping `ghcr.io/opensensor/lightnvr` — go2rtc, WebRTC/HLS, ONVIF, recording. amd64 / aarch64. |
 
 See [`lightnvr/DOCS.md`](./lightnvr/DOCS.md) for configuration, networking and
 storage details.
