@@ -1,73 +1,45 @@
-# LightNVR — Home Assistant add-on
+# LightNVR — Home Assistant add-ons
 
-Run [LightNVR](https://github.com/opensensor/lightnvr) directly from the Home
-Assistant add-on store instead of a standalone Docker/Compose stack.
+Run [LightNVR](https://github.com/opensensor/lightnvr) — a lightweight Network
+Video Recorder with go2rtc streaming, WebRTC/HLS live view, ONVIF discovery and
+motion/object detection — directly from the Home Assistant add-on store.
 
-This folder is a self-contained Home Assistant add-on repository containing a
-single add-on, [`lightnvr`](./lightnvr). It wraps the official multi-arch
-`ghcr.io/opensensor/lightnvr` image with a thin launcher that maps Home
-Assistant storage and options onto LightNVR.
+## Install
 
-## Distribution: dedicated add-ons repository
+[![Add repository to your Home Assistant instance.][add-repo-shield]][add-repo]
 
-Home Assistant expects an add-on repository to have `repository.yaml` at the
-**git root**. Since LightNVR's main repo is a monorepo, publish the **contents of
-this `homeassistant/` folder** as the root of a dedicated repository, e.g.
-`opensensor/lightnvr-hassio-addons`:
+1. In Home Assistant, go to **Settings → Add-ons → Add-on Store**.
+2. Click the ⋮ menu (top-right) → **Repositories**.
+3. Add:
+   ```
+   https://github.com/opensensor/lightnvr-hassio-addons
+   ```
+4. Find **LightNVR** in the store, click **Install**, then **Start**.
+5. Click **Open Web UI** and log in with `admin` / `admin` —
+   **change the password immediately** (host networking exposes the UI on your
+   LAN).
 
-```
-lightnvr-hassio-addons/        (git root)
-├── repository.yaml
-└── lightnvr/
-    ├── config.yaml
-    ├── build.yaml
-    ├── Dockerfile
-    ├── run.sh · ha-cmd.sh · ha-health.sh
-    ├── icon.png · logo.png
-    ├── translations/en.yaml
-    └── README.md · DOCS.md · CHANGELOG.md
-```
+## Add-ons in this repository
 
-One way to create it (run from a checkout of this monorepo):
+| Add-on | Description |
+| --- | --- |
+| [**LightNVR**](./lightnvr) | Lightweight NVR wrapping `ghcr.io/opensensor/lightnvr` — go2rtc, WebRTC/HLS, ONVIF, recording. amd64 / aarch64 / armv7. |
 
-```bash
-gh repo create opensensor/lightnvr-hassio-addons --public \
-  --description "Home Assistant add-ons for LightNVR"
-tmp=$(mktemp -d) && git -C "$tmp" clone \
-  https://github.com/opensensor/lightnvr-hassio-addons .
-cp -r homeassistant/. "$tmp/lightnvr-hassio-addons/"
-git -C "$tmp/lightnvr-hassio-addons" add -A
-git -C "$tmp/lightnvr-hassio-addons" commit -m "LightNVR add-on 0.36.3"
-git -C "$tmp/lightnvr-hassio-addons" push
-```
+See [`lightnvr/DOCS.md`](./lightnvr/DOCS.md) for configuration, networking and
+storage details.
 
-The add-on pulls the public `ghcr.io/opensensor/lightnvr` image at build time, so
-the dedicated repo is fully self-contained.
+## How it works
 
-### Users then install via:
+The add-on layers a thin launcher on top of the official multi-arch
+`ghcr.io/opensensor/lightnvr` image. It uses **host networking** (so ONVIF
+discovery and WebRTC work), serves the Web UI on a non-standard default port
+(**7800**, configurable), keeps your config and database in Home Assistant
+backups, and stores recordings under the Home Assistant **media** folder
+(`/media/lightnvr/recordings`) so backups stay small.
 
-1. **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
-2. Add `https://github.com/opensensor/lightnvr-hassio-addons` and **Add**.
-3. Open **LightNVR** in the store, **Install**, **Start**, **Open Web UI**.
+## Support
 
-### Local add-on (quickest for testing before the repo exists)
+Issues with the NVR itself: <https://github.com/opensensor/lightnvr/issues>.
 
-1. Install the **Samba share** or **Advanced SSH & Web Terminal** add-on.
-2. Copy this directory's `lightnvr/` subfolder into your Home Assistant
-   `/addons` directory, so you have `/addons/lightnvr/config.yaml`.
-3. **Settings → Add-ons → Add-on Store → ⋮ → Reload**.
-4. **LightNVR** appears under **Local add-ons** — install and start it.
-
-## What you get
-
-- go2rtc streaming with WebRTC/HLS low-latency live view
-- ONVIF camera discovery on the LAN (host networking)
-- Continuous recording + motion/object detection
-- Config & database included in Home Assistant backups; recordings kept out of
-  backups under `/media/lightnvr/recordings`
-- Web UI on a non-standard default port (`7800`, configurable) to avoid host
-  conflicts
-
-See [`lightnvr/DOCS.md`](./lightnvr/DOCS.md) for full details.
-
-> Default login is `admin` / `admin` — change it immediately after first start.
+[add-repo]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fopensensor%2Flightnvr-hassio-addons
+[add-repo-shield]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
