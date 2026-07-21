@@ -1,5 +1,10 @@
 # LightNVR — Home Assistant add-ons
 
+> **Part of the [LightNVR project](https://github.com/opensensor/lightnvr).**
+> This repository only packages LightNVR as a Home Assistant add-on — the NVR
+> source code, full documentation and issue tracker live in the
+> [main repository](https://github.com/opensensor/lightnvr).
+
 Run [LightNVR](https://github.com/opensensor/lightnvr) — a lightweight Network
 Video Recorder with go2rtc streaming, WebRTC/HLS live view, ONVIF discovery and
 motion/object detection — directly from the Home Assistant add-on store.
