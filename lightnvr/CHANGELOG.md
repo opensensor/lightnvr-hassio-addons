@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.36.4
+
+- Update to upstream LightNVR 0.36.4.
+
 ## 0.36.3
 
 - Initial Home Assistant add-on release.
