@@ -35,6 +35,11 @@ map:
 webui: "http://[HOST]:[PORT:7800]/"
 # Ports below are informational only (host_network exposes them directly on
 # the host); they surface the port list in the add-on Info tab.
+ingress: true
+ingress_port: 8080          # internal port the app listens on
+ingress_stream: true        # optional, needed for video/streaming apps like this one
+panel_icon: mdi:cctv        # icon shown in the sidebar
+panel_title: LightNVR       # label shown in the sidebar
 ports:
   7800/tcp: 7800
   8554/tcp: 8554
