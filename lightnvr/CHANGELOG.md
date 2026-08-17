@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.37.1
+
+- Update to upstream LightNVR 0.37.1.
+
 ## 0.36.7
 
 - Update to upstream LightNVR 0.36.7.
