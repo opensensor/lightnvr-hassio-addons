@@ -67,7 +67,7 @@ class DetectorContainerTest(unittest.TestCase):
                "from pathlib import Path; Path('/data/options.json').write_text(" + repr(options) + ")")
 
     def start(self):
-        docker("run", "-d", "--name", self.name, "--network", "none",
+        docker("run", "-d", "--init", "--name", self.name, "--network", "none",
                "-v", self.volume + ":/data", IMAGE)
         for _ in range(60):
             state = json.loads(docker("inspect", self.name))[0]["State"]
@@ -109,7 +109,7 @@ class DetectorContainerTest(unittest.TestCase):
         docker("run", "--rm", "--network", "none", "--entrypoint", "python", IMAGE,
                "-c", "import ctypes; ctypes.CDLL('libedgetpu.so.1')")
         self.options("edgetpu")
-        docker("run", "-d", "--name", self.name, "--network", "none",
+        docker("run", "-d", "--init", "--name", self.name, "--network", "none",
                "-v", self.volume + ":/data", IMAGE)
         for _ in range(30):
             state = json.loads(docker("inspect", self.name))[0]["State"]
