@@ -84,9 +84,18 @@ space.
 Manage retention (days / max size) from LightNVR's own **Settings → Storage**
 page.
 
+The launcher starts as root to prepare these directories and migrate ownership
+from older releases, then runs LightNVR and go2rtc as UID/GID **10001**. Existing
+storage paths stay the same. Credential file permissions are preserved, and
+existing recording files are not chowned; their directories are made writable
+so recording and retention continue to work. Other add-ons' media directories
+are not changed. The startup migration requires writable local storage; if
+`/media` uses an NFS export that refuses ownership changes, prepare the
+`lightnvr` subtree for UID/GID 10001 on the storage server.
+
 ## Updating
 
-Bump the base image tag in `build.yaml` (and `version` in `config.yaml`) and
+Bump the base image tag in `build.yaml` and `Dockerfile` (and `version` in `config.yaml`) and
 rebuild, or wait for a new add-on release. Your config, database and recordings
 are preserved across updates because they live on Home Assistant-managed
 storage.

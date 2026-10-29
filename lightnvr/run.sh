@@ -15,11 +15,14 @@
 #   /data/lib/models         -> detection models               (in HA backups)
 #   /media/lightnvr/recordings -> recordings (large; NOT in HA backups)
 #
-# The base image declares VOLUME ["/etc/lightnvr", "/var/lib/lightnvr/data"],
-# so the Supervisor mounts fresh anonymous volumes over those paths on every
-# container (re)creation. We therefore never replace those mountpoints; instead
-# we place symlinks *inside* them that point out to /data and /media.
+# The Dockerfile imports the upstream filesystem without its volume metadata,
+# allowing these paths to be symlinks into Supervisor-managed storage.
 set -e
+
+if [ "$(id -u)" != 0 ]; then
+    echo "[lightnvr-addon] Storage preparation must start as root; the recorder runs as UID 10001." >&2
+    exit 1
+fi
 
 OPTIONS="/data/options.json"
 
@@ -63,8 +66,7 @@ mkdir -p \
     /data/lib/models \
     /media/lightnvr/recordings/mp4
 
-# Config directory (/etc/lightnvr is an anonymous volume): persist the two
-# things that matter via symlinks that point out to /data.
+# Persist configuration through symlinks into the add-on data directory.
 if [ ! -L /etc/lightnvr/lightnvr.ini ]; then
     rm -f /etc/lightnvr/lightnvr.ini
     ln -s /data/config/lightnvr.ini /etc/lightnvr/lightnvr.ini
@@ -74,8 +76,7 @@ if [ ! -L /etc/lightnvr/go2rtc ]; then
     ln -s /data/config/go2rtc /etc/lightnvr/go2rtc
 fi
 
-# Data directory (/var/lib/lightnvr/data is an anonymous volume): redirect the
-# persistent sub-paths. Recordings go to /media so backups stay small.
+# Redirect data paths. Recordings go to /media so backups stay small.
 link_out() {
     # link_out <path-inside-data-volume> <target>
     if [ ! -L "$1" ]; then
@@ -92,7 +93,27 @@ echo "[lightnvr-addon]   config + database -> /data (included in HA backups)"
 echo "[lightnvr-addon]   recordings        -> /media/lightnvr/recordings"
 echo "[lightnvr-addon] Options: web_port=${WEB_PORT} max_streams=${MAX_STREAMS} go2rtc_persist=${GO2RTC_PERSIST} onvif_network=${ONVIF_NETWORK:-<none>}"
 
-# Hand off to the base image entrypoint (init + go2rtc config regen + signal
-# handling). The CMD passed here (/ha-cmd.sh) runs *after* the entrypoint has
-# generated the default config, so it can pin the Web UI port before start.
-exec /usr/local/bin/docker-entrypoint.sh "$@"
+# Migrate only this add-on's storage, including root-owned pre-0.44 installs.
+# Walk real targets explicitly: find does not follow the symlinks above.
+# Preserve modes (notably 0600 credentials) and leave recording files alone;
+# writable directories allow retention to remove old root-owned segments.
+mkdir -p /var/log/lightnvr /var/run/lightnvr
+find /data /data/lib /media/lightnvr /var/lib/lightnvr/data -maxdepth 0 \
+    \( ! -user 10001 -o ! -group 10001 \) -exec chown -h 10001:10001 {} +
+find /data/config /data/lib/database /data/lib/models \
+    /var/log/lightnvr /var/run/lightnvr \
+    \( ! -user 10001 -o ! -group 10001 \) -exec chown -h 10001:10001 {} +
+find /media/lightnvr/recordings -type d \
+    \( ! -user 10001 -o ! -group 10001 \) -exec chown -h 10001:10001 {} +
+
+# Older configs used a PID file directly in root-owned /run. Migrate that
+# default before upstream initialization; preserve explicitly customized paths.
+if [ -f /data/config/lightnvr.ini ]; then
+    sed -i -E 's@^(pid_file[[:space:]]*=[[:space:]]*)/var/run/lightnvr\.pid([[:space:]]*([;#].*)?)$@\1/var/run/lightnvr/lightnvr.pid\2@' /data/config/lightnvr.ini
+fi
+
+# Configuration initialization, go2rtc generation, and the recorder all run
+# unprivileged. Do not invoke the base image's root migration: it cannot follow
+# our storage symlinks to fix their targets.
+exec setpriv --reuid=10001 --regid=10001 --clear-groups -- \
+    /usr/local/bin/docker-entrypoint.sh "$@"

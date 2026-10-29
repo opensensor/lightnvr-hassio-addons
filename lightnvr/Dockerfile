@@ -1,6 +1,21 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/opensensor/lightnvr:0.45.0
 # hadolint ignore=DL3006
-FROM ${BUILD_FROM}
+FROM ${BUILD_FROM} AS upstream
+
+# Import the runtime filesystem without the upstream USER/VOLUME metadata.
+# The add-on owns persistence via /data and /media. Inherited database/models/
+# recordings volumes would become mountpoints that run.sh cannot symlink.
+FROM scratch
+COPY --from=upstream / /
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    DEBIAN_FRONTEND=noninteractive \
+    GO2RTC_CONFIG_PERSIST=true \
+    LIGHTNVR_AUTO_INIT=true \
+    LIGHTNVR_WEB_ROOT=/var/lib/lightnvr/www
+
+# Root is used only for package installation and storage preparation.
+# run.sh drops privileges before invoking the upstream entrypoint.
+USER 0:0
 
 # jq is used by run.sh to read the add-on options from /data/options.json.
 # The base image is Debian-slim, so install it with apt.
