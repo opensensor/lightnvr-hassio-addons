@@ -48,9 +48,12 @@ jobs:
             echo "::error::Could not determine an upstream version"; exit 1
           fi
           current=$(grep -E '^version:' lightnvr/config.yaml | sed -E 's/.*"([^"]+)".*/\1/')
+          # A fourth numeric component is an add-on packaging revision.
+          # Compare upstream versions so the daily sync cannot undo that fix.
+          current_upstream=$(printf '%s' "${current}" | cut -d. -f1-3)
           {
             echo "latest=${latest}"
-            echo "current=${current}"
+            echo "current=${current_upstream}"
           } >> "${GITHUB_OUTPUT}"
           echo "Upstream latest: ${latest} | currently pinned: ${current}"
 
@@ -76,7 +79,7 @@ jobs:
         run: |
           set -euo pipefail
           new="${{ steps.ver.outputs.latest }}"
-          sed -i -E "s#(ghcr\.io/opensensor/lightnvr):[0-9]+\.[0-9]+\.[0-9]+#\1:${new}#g" lightnvr/build.yaml
+          sed -i -E "s#(ghcr\.io/opensensor/lightnvr):[0-9]+\.[0-9]+\.[0-9]+#\1:${new}#g" lightnvr/build.yaml lightnvr/Dockerfile
           sed -i -E "s/^(version:).*/\1 \"${new}\"/" lightnvr/config.yaml
           tmp=$(mktemp)
           {
@@ -95,6 +98,6 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lightnvr/build.yaml lightnvr/config.yaml lightnvr/CHANGELOG.md
+          git add lightnvr/build.yaml lightnvr/Dockerfile lightnvr/config.yaml lightnvr/CHANGELOG.md
           git commit -m "chore: bump LightNVR add-on to ${{ steps.ver.outputs.latest }}"
           git push

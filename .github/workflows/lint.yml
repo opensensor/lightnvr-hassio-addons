@@ -10,6 +10,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  container-smoke:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check shell scripts
+        run: shellcheck lightnvr/*.sh
+
+      - name: Build add-on
+        run: docker build -t lightnvr-addon:issue688 lightnvr
+
+      - name: Test fresh install and root-owned upgrade
+        run: python3 tests/test_container.py
+
   addon-linter:
     runs-on: ubuntu-latest
     steps:

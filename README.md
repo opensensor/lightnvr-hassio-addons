@@ -35,12 +35,36 @@ storage details.
 
 ## How it works
 
-The add-on layers a thin launcher on top of the official multi-arch
-`ghcr.io/opensensor/lightnvr` image. It uses **host networking** (so ONVIF
+The add-on imports the runtime filesystem from the official multi-arch
+`ghcr.io/opensensor/lightnvr` image into its own Docker stage. This avoids
+inheriting Docker volume declarations that conflict with Home Assistant's
+storage layout. Startup prepares that storage as root, then drops to
+UID/GID **10001** before initializing or starting LightNVR and go2rtc.
+It uses **host networking** (so ONVIF
 discovery and WebRTC work), serves the Web UI on a non-standard default port
 (**7800**, configurable), keeps your config and database in Home Assistant
 backups, and stores recordings under the Home Assistant **media** folder
 (`/media/lightnvr/recordings`) so backups stay small.
+
+## Container regression test
+
+With Docker and Python 3 available:
+
+```sh
+docker build -t lightnvr-addon:issue688 lightnvr
+python3 tests/test_container.py
+```
+
+The test uses disposable volumes without publishing ports. It checks fresh
+startup, migration of root-owned data, private file modes, non-root recorder
+and go2rtc processes, custom-port healthchecks, and persistence after container
+recreation. Set `ADDON_TEST_IMAGE` to test another locally built image.
+
+An optional fourth version component (for example `0.45.0.1`) identifies an
+add-on packaging revision; `build.yaml` still pins upstream `0.45.0`. The daily
+version sync compares the first three components and preserves packaging fixes
+until a newer upstream version is available. When updating the upstream pin,
+update both `build.yaml` and the Dockerfile's default `BUILD_FROM`.
 
 ## Support
 

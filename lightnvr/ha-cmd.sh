@@ -9,7 +9,7 @@ INI="/etc/lightnvr/lightnvr.ini"   # symlink -> /data/config/lightnvr.ini
 
 # Record the active port so the healthcheck can find it (it runs in a fresh
 # process that does not inherit our exported environment).
-echo "$PORT" > /run/lightnvr.web_port 2>/dev/null || true
+echo "$PORT" > /run/lightnvr/web_port
 
 # Pin the [web] port. awk tracks the current section so only the [web] port is
 # touched — go2rtc's api_port and mqtt's broker_port are left alone. Write back

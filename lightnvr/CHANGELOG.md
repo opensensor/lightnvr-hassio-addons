@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.45.0.1
+
+- Fix installation and startup with upstream non-root images (LightNVR #688).
+- Prepare Home Assistant storage as root, then run LightNVR and go2rtc as UID/GID 10001.
+- Preserve existing storage paths and migrate ownership without changing credential modes.
+- Fix healthchecks when using a custom web port.
+
 ## 0.45.0
 
 - Update to upstream LightNVR 0.45.0.
