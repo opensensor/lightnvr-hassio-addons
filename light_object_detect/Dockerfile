@@ -1,5 +1,4 @@
-ARG BUILD_FROM=python:3.11-slim-trixie
-FROM ${BUILD_FROM}
+FROM python:3.11-slim-trixie
 
 # Build the CPU/Coral runtime from a pinned upstream revision. The general
 # upstream image also installs Torch/Transformers and is several GB larger.
