@@ -28,7 +28,23 @@ jobs:
       - name: Test fresh install and root-owned upgrade
         run: python3 tests/test_container.py
 
+  detector-smoke:
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build CPU and Coral detector runtime
+        run: docker build -t light-object-detect-addon:issue2 light_object_detect
+      - name: Test inference, persistence, and missing hardware
+        run: python3 tests/test_object_detect.py
+
   addon-linter:
+    strategy:
+      matrix:
+        addon: [lightnvr, light_object_detect]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,4 +53,4 @@ jobs:
       - name: Run Home Assistant add-on linter
         uses: frenck/action-addon-linter@v2
         with:
-          path: "./lightnvr"
+          path: "./${{ matrix.addon }}"
