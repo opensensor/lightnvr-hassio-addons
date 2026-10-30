@@ -1,0 +1,17 @@
+---
+configuration:
+  default_backend:
+    name: Detection backend
+    description: ONNX/TFLite use CPU; Edge TPU requires a Coral USB Accelerator.
+  port:
+    name: API port
+    description: Use this port in LightNVR's API Detection URL.
+  bind_address:
+    name: Listen address
+    description: Loopback is sufficient for the LightNVR add-on on this host.
+  confidence_threshold:
+    name: Confidence threshold
+    description: Minimum confidence unless overridden by a detection request.
+  edgetpu_device:
+    name: Coral USB device
+    description: Use usb for automatic selection or usb:0 to select a specific device.

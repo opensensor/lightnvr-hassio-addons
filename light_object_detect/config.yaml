@@ -1,0 +1,26 @@
+---
+name: Light Object Detect
+version: "0.1.0"
+slug: light_object_detect
+description: >-
+  Object detection API for LightNVR with ONNX, TensorFlow Lite,
+  and Google Coral USB Edge TPU backends.
+url: "https://github.com/opensensor/lightnvr-hassio-addons"
+arch:
+  - amd64
+  - aarch64
+startup: services
+host_network: true
+usb: true
+options:
+  default_backend: onnx
+  port: 8000
+  bind_address: "127.0.0.1"
+  confidence_threshold: 0.5
+  edgetpu_device: "usb"
+schema:
+  default_backend: list(onnx|tflite|edgetpu)
+  port: int(1,65535)
+  bind_address: list(127.0.0.1|0.0.0.0)
+  confidence_threshold: float(0,1)
+  edgetpu_device: str

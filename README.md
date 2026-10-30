@@ -29,6 +29,7 @@ motion/object detection — directly from the Home Assistant add-on store.
 | Add-on | Description |
 | --- | --- |
 | [**LightNVR**](./lightnvr) | Lightweight NVR wrapping `ghcr.io/opensensor/lightnvr` — go2rtc, WebRTC/HLS, ONVIF, recording. amd64 / aarch64. |
+| [**Light Object Detect**](./light_object_detect) | Detection API with ONNX, TFLite, and Coral USB Edge TPU. amd64 / aarch64. |
 
 See [`lightnvr/DOCS.md`](./lightnvr/DOCS.md) for configuration, networking and
 storage details.
@@ -72,3 +73,21 @@ Issues with the NVR itself: <https://github.com/opensensor/lightnvr/issues>.
 
 [add-repo]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fopensensor%2Flightnvr-hassio-addons
 [add-repo-shield]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
+
+## Building the detection add-on
+
+```sh
+docker build -t light-object-detect-addon:issue2 light_object_detect
+python3 tests/test_object_detect.py
+```
+
+The Dockerfile pins the upstream source revision and Python dependencies. It
+uses the upstream CPU/Coral application without the optional Torch stack.
+Update `UPSTREAM_REF` deliberately after validating both native architecture
+jobs. The initial revision includes the metadata fix in
+[light-object-detect PR #16](https://github.com/opensensor/light-object-detect/pull/16).
+
+The smoke tests run real ONNX and TFLite inference without network access,
+check model persistence across container recreation, load the Coral runtime,
+and verify that a missing Coral fails startup. Actual USB inference still
+requires device testing on Home Assistant OS.
