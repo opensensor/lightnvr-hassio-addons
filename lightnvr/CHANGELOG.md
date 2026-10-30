@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.45.1
+
+- Update to upstream LightNVR 0.45.1.
+
 ## 0.45.0.1
 
 - Fix installation and startup with upstream non-root images (LightNVR #688).

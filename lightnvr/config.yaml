@@ -1,6 +1,6 @@
 ---
 name: LightNVR
-version: "0.45.0.1"
+version: "0.45.1"
 slug: lightnvr
 description: >-
   Lightweight Network Video Recorder — go2rtc streaming, WebRTC/HLS live view,
