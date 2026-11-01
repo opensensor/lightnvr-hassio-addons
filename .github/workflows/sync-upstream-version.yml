@@ -1,13 +1,14 @@
 name: Sync upstream LightNVR version
 
-# Keeps this add-on pinned to the latest published LightNVR release. Runs daily
-# and can be triggered manually. When a newer semver tag exists upstream *and*
+# Keeps this add-on pinned to the latest published LightNVR release. Upstream's
+# Docker workflow dispatches this as soon as a release image is published; the
+# hourly schedule is a fallback, and it can also be triggered manually. When a newer semver tag exists upstream *and*
 # its multi-arch image is published on GHCR, it bumps build.yaml + config.yaml,
 # prepends a CHANGELOG entry, and commits to main.
 
 on:
   schedule:
-    - cron: "0 6 * * *" # daily at 06:00 UTC
+    - cron: "17 * * * *" # hourly fallback; exits in seconds when nothing changed
   workflow_dispatch:
     inputs:
       version:
@@ -17,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # dispatch Lint after a bump (GITHUB_TOKEN pushes don't trigger it)
 
 concurrency:
   group: sync-upstream-version
@@ -28,6 +30,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Runs queued behind the concurrency group must see the latest main,
+          # not the commit that was current when they were triggered.
+          ref: main
 
       - name: Determine target version
         id: ver
@@ -109,3 +115,11 @@ jobs:
           git add lightnvr/build.yaml lightnvr/Dockerfile lightnvr/config.yaml lightnvr/CHANGELOG.md
           git commit -m "chore: bump LightNVR add-on to ${{ steps.ver.outputs.latest }}"
           git push
+
+      - name: Run Lint on the bump commit
+        if: steps.ver.outputs.latest != steps.ver.outputs.current && steps.ghcr.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Pushes made with GITHUB_TOKEN don't start push-triggered workflows,
+        # but workflow_dispatch is exempt from that rule.
+        run: gh workflow run lint.yml --repo "${{ github.repository }}" --ref main
