@@ -58,6 +58,7 @@ jobs:
           echo "Upstream latest: ${latest} | currently pinned: ${current}"
 
       - name: Verify image tag is published on GHCR
+        id: ghcr
         if: steps.ver.outputs.latest != steps.ver.outputs.current
         run: |
           set -euo pipefail
@@ -69,13 +70,20 @@ jobs:
             -H "Accept: application/vnd.docker.distribution.manifest.list.v2+json" \
             "https://ghcr.io/v2/opensensor/lightnvr/manifests/${ver}")
           echo "GHCR manifest for ${ver}: HTTP ${code}"
-          if [ "${code}" != "200" ]; then
+          if [ "${code}" = "200" ]; then
+            echo "published=true" >> "${GITHUB_OUTPUT}"
+          elif [ "${code}" = "404" ]; then
+            # Upstream tag exists but its image build hasn't finished yet.
+            # Not an error: a later run will pick it up.
             echo "::notice::Image ghcr.io/opensensor/lightnvr:${ver} not published yet — skipping bump"
+            echo "published=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::error::Unexpected HTTP ${code} from GHCR"
             exit 1
           fi
 
       - name: Bump add-on files
-        if: steps.ver.outputs.latest != steps.ver.outputs.current
+        if: steps.ver.outputs.latest != steps.ver.outputs.current && steps.ghcr.outputs.published == 'true'
         run: |
           set -euo pipefail
           new="${{ steps.ver.outputs.latest }}"
@@ -93,7 +101,7 @@ jobs:
           mv "${tmp}" lightnvr/CHANGELOG.md
 
       - name: Commit & push
-        if: steps.ver.outputs.latest != steps.ver.outputs.current
+        if: steps.ver.outputs.latest != steps.ver.outputs.current && steps.ghcr.outputs.published == 'true'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
