@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.46.0
+
+- Update to upstream LightNVR 0.46.0.
+
 ## 0.45.1
 
 - Update to upstream LightNVR 0.45.1.
