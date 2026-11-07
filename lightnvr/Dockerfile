@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/opensensor/lightnvr:0.46.3
+ARG BUILD_FROM=ghcr.io/opensensor/lightnvr:0.47.2
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM} AS upstream
 
